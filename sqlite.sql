@@ -6,6 +6,6 @@ CREATE TABLE IF NOT EXISTS lost_items(id INTEGER PRIMARY KEY AUTOINCREMENT, item
 -- VALUES (connect this to the class, the forms that people fill out. 
 -- SELECT * FROM lost_items 
 
-DROP TABLE claims; 
+DROP TABLE IF EXISTS  claims; 
 
-CREATE TABLE IF NOT EXISTS claims (id INTEGER PRIMARY KEY AUTOINCREMENT, item_id INTEGER NOT NULL, student_username TEXT NOT NULL, claim_date TEXT NOT NULL, status TEXT NOT NULL, FOREIGN KEY (item_id) REFERENCES lost_items(id));
+
