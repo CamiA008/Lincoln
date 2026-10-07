@@ -1,0 +1,5 @@
+admin,admin123
+principal,lincoln2026
+office,office456
+lostfound,lfadmin
+teacher1,password1

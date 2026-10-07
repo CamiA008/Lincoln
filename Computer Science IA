@@ -1,0 +1,80 @@
+#Lost and Found
+
+import streamlit as st
+
+st.title("Welcome to Lincoln School's Lost and Found!")
+
+st.write("Select your role:")
+
+col1, col2, col3, col4, col5, col6 = st.columns(6)
+
+role = ""
+
+if "role" not in st.session_state: # Starts program over, saves it in memory 
+    st.session_state.role = ""
+
+with col1:
+    if st.button("Admin"):
+        st.session_state.role = "Admin"
+        st.write("Admin login selected")
+
+with col2:
+    if st.button("Student"):
+        st.session_state.role = "Student"
+        st.write("Student login selected")
+
+
+if st.session_state.role == "":
+    st.error("You must choose a role before logging in")
+
+else:
+    username = st.text_input("Username").strip()
+    password = st.text_input("Password", type="password").strip() # type = "password" hides the characters that the user types 
+
+if st.button("Login"):
+
+    admin = []
+    student = []
+    found = False 
+
+    if st.session_state.role == "Admin":
+        try:
+            with open("Admin.txt", "r") as myfile:
+
+                for line in myfile:
+                    admin.append(line.strip())
+
+                if f"{username},{password}" in admin: #The f lets you put variables inside of a string 
+                    found = True
+                    st.success("Welcome Admin!")
+
+            if not found: 
+                st.error("The username or password is incorrect")
+
+        except FileNotFoundError:
+            st.write ("I could not find that file") 
+        except Exception: 
+            st.write("Another error occured")
+
+    if st.session_state.role == "Student":
+        try:
+            with open("student.txt", "r") as myfile:
+
+                for line in myfile:
+                    student.append(line.strip())
+
+                if f"{username},{password}" in student: #The f lets you put variables inside of a string 
+                    found = True
+                    st.success("Welcome Student!")
+
+            if not found: 
+                st.error("The username or password is incorrect")
+
+        except FileNotFoundError:
+            st.write ("I could not find that file") 
+        except Exception: 
+            st.write("Another error occured")
+
+
+
+
