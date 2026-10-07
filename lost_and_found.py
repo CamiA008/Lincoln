@@ -75,9 +75,12 @@ def home_page():
                 st.write("Another error occured")
     
     elif st.session_state.role == "Student":
+        
+        if st.button("Login"):
             st.success("Welcome Student!")
             st.session_state.page = "student"
             st.rerun()
+
         
 def admin_page():
 
