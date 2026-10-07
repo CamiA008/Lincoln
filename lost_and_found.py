@@ -326,9 +326,41 @@ def student_page():
                 st.warning("this item has already been claimed.")
 
             else:
-                cursor.execute("""INSERT INTO claims(item_id, student_username, claim_date, status) VALUES (?, ?, ?, ?)""", (item[0], st.session_state.username, str(date.today()), "Pending"))
-                connect.commit()
-                st.success("Claim submitted!")
+                st.session_state.claiming_item = item[0]
+
+
+        if st.session_state.get("claiming_item") == item[0]:
+            st.write("Please fill this out to claim") 
+
+            student_name = st.text_input(
+            "Your name:",
+            key=f"name_{item[0]}")
+        
+            bus_route = st.text_input(
+            "Your bus route:",
+            key=f"bus_{item[0]}")
+        
+            if st.button("Submit Claim", key=f"submit_{item[0]}"):
+        
+                if student_name.strip() == "" or bus_route.strip() == "":
+                    st.error("Please enter your name and bus route.")
+        
+                else:
+                    cursor.execute(
+                        """
+                        INSERT INTO claims
+                        (item_id, student_name, bus_route, claim_date, status)
+                        VALUES (?, ?, ?, ?, ?)
+                        """,
+                        (item[0], student_name.strip(),bus_route.strip(), str(date.today()),"Pending"))
+        
+                    connect.commit()
+        
+                    st.success("Claim submitted!")
+        
+                    st.session_state.claiming_item = None
+        
+                    st.rerun()
 
     st.divider() # Draw a horizontal line across the page, separate the objects
  
