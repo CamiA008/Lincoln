@@ -116,29 +116,29 @@ def admin_page():
 
         else:
             for claim in claims:
-                st.write(f"Item ID: {claim[0]}, Student: {claim[1]}, Claim Date: {claim[2]}, Status: {claim[3]}")
+                st.write(f"Item ID: {claim[1]}, Student: {claim[2]},Bus Route: {claim[3]}, Claim Date: {claim[4]}, Status: {claim[5]}")
 
                 col1, col2,col3 = st.columns(3)
 
         # Accept or deny a claim 
                 with col1:
                     if st.button("Accept", key = "accept" + str(claim[0])): # line 83 "Computer Science IA", THere i got the help to fix this error 
-                        cursor.execute("UPDATE claims SET status = 'Approved' WHERE item_id = ?", (claim[0],))
+                        cursor.execute("UPDATE claims SET status = 'Approved' WHERE id = ?", (claim[0],))
                         connect.commit()
                         st.success("Claim approved!")
                         st.rerun()
 
                 with col2: 
                     if st.button("Reject", key = "reject" + str(claim[0])):
-                        cursor.execute("UPDATE claims SET status = 'Rejected' WHERE item_id = ?", (claim[0],))
+                        cursor.execute("UPDATE claims SET status = 'Rejected' WHERE id = ?", (claim[0],))
                         connect.commit()
                         st.success("Claim rejected")
                         st.rerun()
 
                 with col3:
-                    if claim[3] == "Collected" or "Rejected":
+                    if claim[5] == "Collected" or "Rejected":
                         if st.button("Delete Claim", key=f"delete_{claim[0]}"):
-                            cursor.execute("DELETE FROM claims WHERE item_id = ?", (claim[0],))
+                            cursor.execute("DELETE FROM claims WHERE id = ?", (claim[0],))
                             connect.commit()
                             st.success("Claim deleated!")
                             st.rerun()
@@ -217,14 +217,14 @@ def student_page():
 # Students' lost items take up more space so, for convencience, I will put their claims at the top 
     if "show_my_claims" not in st.session_state:
         st.session_state.show_my_claims = False 
-    
+
     if st.button("View My Claims"):
         st.session_state.show_my_claims = not st.session_state.show_my_claims # True does not work form some reason 
 
     if st.session_state.show_my_claims:
         st.subheader("My Claim Requests")
 
-        cursor.execute( "SELECT * FROM claims WHERE student_username = ?", (st.session_state.username,))
+        cursor.execute( "SELECT * FROM claims WHERE student_name = ?", (search_name.strip(),))
         claims = cursor.fetchall()  
 
         # Display the approved or denired claim
@@ -233,7 +233,7 @@ def student_page():
 
         else:
             for claim in claims:
-                cursor.execute("SELECT item_name FROM lost_items WHERE id = ?", (claim[0],))
+                cursor.execute("SELECT item_name FROM lost_items WHERE id = ?", (claim[1],))
                 item = cursor.fetchone()
 
                 if item:
@@ -241,16 +241,16 @@ def student_page():
                 else: 
                     item_name = "Deleted item"
 
-                if claim[3] == "Approved":
+                if claim[5] == "Approved":
                     st.success(f" Your claim for {item_name} has been approved! Please collect it form the Lost and Found at 2:30pm")
                     if st.button("Got it!", key=f"got_it_{claim[0]}"):
                         cursor.execute("UPDATE claims SET status = 'Collected' WHERE item_id = ?", (claim[0],) )
                         connect.commit()
                         st.success("Item was collected")
                         st.rerun()
-                elif claim[3] == "Rejected":
+                elif claim[5] == "Rejected":
                     st.error(f"Your claim for {item_name} has been rejected. Please contact security for more information")
-                elif claim[3] == "Collected":
+                elif claim[5] == "Collected":
                     st.success("You have collected your item")
                 else:
                     st.info(f"Your request for {item_name} is still pending") #it is nither an error not success, but i want it to have a condition. im not sure if this makes sense
@@ -275,11 +275,12 @@ def student_page():
     
 
     filtered_items = []
-    if search_text == "":
+    if search_text.strip() == "":
         filtered_items = lost_items 
     else:
         for item in lost_items:
             if search_field == "Name":
+                
                 value = item[1]
             elif search_field == "Category":
                 value = item[2]
@@ -296,20 +297,22 @@ def student_page():
 
     if len(filtered_items) == 0:
         st.write("No lost items have been uploaded yet.")
+
+    else: 
     
-    for item in filtered_items: 
-        col1, col2 = st.columns(2)
-
-        with col1:
-            if item[7]:
-                st.image(item[7], width = 300)
-
-        with col2: 
-            st.write(f"{item[1]}")
-            st.write(f"Category: {item[2]}")
-            st.write(f" Color: {item[3]}")
-            st.write(f" Location found: {item [4]}")
-            st.write(f" Date found: {item[5]}")
+        for item in filtered_items: 
+            col1, col2 = st.columns(2)
+    
+            with col1:
+                if item[7]:
+                    st.image(item[7], width = 300)
+    
+            with col2: 
+                st.write(f"{item[1]}")
+                st.write(f"Category: {item[2]}")
+                st.write(f" Color: {item[3]}")
+                st.write(f" Location found: {item [4]}")
+                st.write(f" Date found: {item[5]}")
 
         #Claim button 
     
@@ -371,16 +374,3 @@ elif st.session_state.page == "admin":
 
 elif st.session_state.page == "student":
     student_page()
-
-# My internet is slow 
-#Next time you open this, delete the object you already created and add a new one 
-# see if this fixes the bug, it is not creating the id. 
-# I assume it is because the object was created before I implemented that feature
-
-
-# My head hurts.
-# Next time you open this, attempt to debug the student's claim button, for some reason this isnt appearing on the screen 
-# I suspect the admin's acceptance or denial isnt being saved. 
-# I want to make this "View your claim " button like the admin's one. where they can see everyone's claims, accept or deny them 
-# However, when students press their button, it will tell them whether it is accepted or denied. If acepted, it must tell them where to find it. 
-
