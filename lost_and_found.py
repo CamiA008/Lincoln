@@ -151,7 +151,6 @@ def admin_page():
             item_name = st.selectbox("Item Name",["Sweater", "Lunchbox"," Water Bottle", "Pencil Case", "Shirt", "Headphones", "Other"])
 
             category = st.selectbox("Category",["Clothing", "Electronics", "School Supplies", "Food and Drink", "Personal Items", "Other"])
-            brand = st.text_input("Brand")
             color = st.selectbox("Color",["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Brown", "Black", "White", "Gray"])
 
             location_found = st.selectbox("Location",["Cafeteria","Central Plaza", "Buses", "Gym", "High School Building", "Middle School Building", "Elementary Building", "Preschool Building"])
@@ -161,7 +160,7 @@ def admin_page():
             submitted = st.form_submit_button("Add Item")
 
         if submitted:
-            new_item = Item(item_name, category, brand, color, location_found, date_found, image)
+            new_item = Item(item_name, category, color, location_found, date_found, image)
             # save the picture in SQLite 
             if image:
                 image_data = image.getvalue()
@@ -170,7 +169,7 @@ def admin_page():
             
             # Conncect to the sqlite.db
 
-            cursor.execute("""INSERT INTO lost_items (item_name, category, brand, color, location_found, date_found, image) VALUES (?, ?, ?, ?, ?, ?, ?) """, (new_item.item_name, new_item.category,new_item.brand,new_item.color, new_item.location_found, str(new_item.date_found),image_data)) #the ? are placeholders 
+            cursor.execute("""INSERT INTO lost_items (item_name, category, color, location_found, date_found, image) VALUES (?, ?, ?, ?, ?, ?, ?) """, (new_item.item_name, new_item.category,new_item.color, new_item.location_found, str(new_item.date_found),image_data)) #the ? are placeholders 
             connect.commit() #Save 
 
             st.success("Item added!")
@@ -190,7 +189,7 @@ def admin_page():
     else: 
     # Add the new item and the new item 
         for item in lost_items:
-            st.write(f" Id: {item[0]}, Name: {item[1]}, Category: {item[2]}, Brand: {item[3]}, Color: {item[4]}, Location: {item[5]}, Date: {item[6]}")
+            st.write(f" Id: {item[0]}, Name: {item[1]}, Category: {item[2]},  Color: {item[3]}, Location: {item[4]}, Date: {item[5]}")
 
     # Delete an object if necessary 
             if st.button("Delete", key = item[0]):
@@ -263,7 +262,7 @@ def student_page():
 
     st.subheader("Search")
     # linear search algorithm 
-    search_field = st.selectbox("Search by", ["Name","Category", "Brand", "Color", "Location"])
+    search_field = st.selectbox("Search by", ["Name","Category", "Color", "Location"])
 
     st.divider()
     st.text("Item names available: Sweater, Lunchbox, Water Bottle, Pencil Case, Shirt, Headphones, Other")
@@ -284,12 +283,10 @@ def student_page():
                 value = item[1]
             elif search_field == "Category":
                 value = item[2]
-            elif search_field == "Brand":
-                value = item[3]
             elif search_field == "Color":
-                value = item[4]
+                value = item[3]
             else:
-                value = item[5]
+                value = item[4]
 
             if value and search_text.lower() in value.lower():
                 filtered_items.append(item)
@@ -310,10 +307,9 @@ def student_page():
         with col2: 
             st.write(f"{item[1]}")
             st.write(f"Category: {item[2]}")
-            st.write(f"Brand: {item[3]}")
-            st.write(f" Color: {item[4]}")
-            st.write(f" Location found: {item [5]}")
-            st.write(f" Date found: {item[6]}")
+            st.write(f" Color: {item[3]}")
+            st.write(f" Location found: {item [4]}")
+            st.write(f" Date found: {item[5]}")
 
         #Claim button 
     
