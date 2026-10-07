@@ -45,9 +45,9 @@ def home_page():
         st.error("You must choose a role before logging in")
 
 # Text inputs that allow you to write the username and password in
-    else:
+    elif st.session_state.role == "Admin":
         username = st.text_input("Username").strip()
-        password = st.text_input("Password", type="password").strip() # type = "password" hides the characters that the user types 
+        password = st.text_input("Password", type="password").strip()
 
 # Login button
     if st.button("Login"):
