@@ -45,19 +45,15 @@ def home_page():
         st.error("You must choose a role before logging in")
 
 # Text inputs that allow you to write the username and password in
-    else:
+    elif st.session_state.role == "Admin":
         username = st.text_input("Username").strip()
-        password = st.text_input("Password", type="password").strip() # type = "password" hides the characters that the user types 
+        password = st.text_input("Password", type="password").strip()
 
 # Login button
-    if st.button("Login"):
+        if st.button("Login"):
+            admin = []
+            found = False 
 
-        admin = []
-        student = []
-        found = False 
-
-# Usernames and passwords will be administered by technology, how lincoln does with Microsoft. Therefore, these can be written in a seperate file the webpage can read from 
-        if st.session_state.role == "Admin":
             try:
                 with open("admin.txt", "r") as myfile:
 
@@ -77,29 +73,12 @@ def home_page():
                 st.write ("I could not find that file") 
             except Exception: 
                 st.write("Another error occured")
-
-        if st.session_state.role == "Student":
-            try:
-                with open("student.txt", "r") as myfile:
-
-                    for line in myfile:
-                        student.append(line.strip())
-
-                    if f"{username},{password}" in student: #The f lets you put variables inside of a string 
-                        found = True
-                        st.session_state.username = username 
-                        st.success("Welcome Student!")
-                        st.session_state.page = "student"
-                        st.rerun()
-
-                if not found: 
-                    st.error("The username or password is incorrect")
-
-            except FileNotFoundError:
-                st.write ("I could not find that file") 
-            except Exception: 
-                st.write("Another error occured")
-
+    
+    elif st.session_state.role == "Student":
+            st.success("Welcome Student!")
+            st.session_state.page = "student"
+            st.rerun()
+        
 def admin_page():
 
     if "show_form" not in st.session_state:
