@@ -169,7 +169,7 @@ def admin_page():
             
             # Conncect to the sqlite.db
 
-            cursor.execute("""INSERT INTO lost_items (item_name, category, color, location_found, date_found, image) VALUES (?, ?, ?, ?, ?) """, (new_item.item_name, new_item.category,new_item.color, new_item.location_found, str(new_item.date_found),image_data)) #the ? are placeholders 
+            cursor.execute("""INSERT INTO lost_items (item_name, category, color, location_found, date_found, image) VALUES (?, ?, ?, ?, ?, ?) """, (new_item.item_name, new_item.category,new_item.color, new_item.location_found, str(new_item.date_found),image_data)) #the ? are placeholders 
             connect.commit() #Save 
 
             st.success("Item added!")
