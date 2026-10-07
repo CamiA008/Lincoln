@@ -79,26 +79,10 @@ def home_page():
                 st.write("Another error occured")
 
         if st.session_state.role == "Student":
-            try:
-                with open("student.txt", "r") as myfile:
+            st.success("Welcome Student!")
+            st.session_state.page = "student"
+            st.rerun()
 
-                    for line in myfile:
-                        student.append(line.strip())
-
-                    if f"{username},{password}" in student: #The f lets you put variables inside of a string 
-                        found = True
-                        st.session_state.username = username 
-                        st.success("Welcome Student!")
-                        st.session_state.page = "student"
-                        st.rerun()
-
-                if not found: 
-                    st.error("The username or password is incorrect")
-
-            except FileNotFoundError:
-                st.write ("I could not find that file") 
-            except Exception: 
-                st.write("Another error occured")
 
 def admin_page():
 
