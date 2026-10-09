@@ -246,7 +246,7 @@ def student_page():
                     item_name = "Deleted item"
 
                 if claim[4] == "Approved":
-                    st.success(f" Your claim for {item_name} has been approved! Please collect it form the Lost and Found at 2:30pm")
+                    st.success(f" Your claim for {item_name} has been approved! If the item will not be delivered, please collect it form the Lost and Found at 2:30pm")
                     if st.button("Got it!", key=f"got_it_{claim[0]}"):
                         cursor.execute("UPDATE claims SET status = 'Collected' WHERE item_id = ?", (claim[0],) )
                         connect.commit()
