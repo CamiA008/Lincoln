@@ -115,7 +115,7 @@ def admin_page():
 
         else:
             for claim in claims:
-                st.write(f"Item ID: {claim[0]}, Student: {claim[1]}, Claim Date: {claim[2]}, Status: {claim[3]}")
+                st.write(f"Item ID: {claim[1]}, Student: {claim[2]}, Claim Date: {claim[3]}, Status: {claim[4]}")
 
                 col1, col2,col3 = st.columns(3)
 
