@@ -11,8 +11,24 @@ import sqlite3
 connect = sqlite3.connect("sqlite.db", check_same_thread = False)
 cursor = connect.cursor()
 
-cursor.execute("PRAGMA table_info(claims)")
-st.write("Claims table columns:", cursor.fetchall())
+cursor.execute("DROP TABLE IF EXISTS claims")
+
+cursor.execute("""
+CREATE TABLE claims (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_id INTEGER NOT NULL,
+    student_name TEXT NOT NULL,
+    claim_date TEXT NOT NULL,
+    status TEXT NOT NULL,
+    delivery TEXT NOT NULL,
+    bus_number TEXT,
+    FOREIGN KEY (item_id) REFERENCES lost_items(id)
+)
+""")
+
+connect.commit()
+
+
 
 if "page" not in st.session_state:
     st.session_state.page = "login" # remembers which screen user should see 
