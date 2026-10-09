@@ -15,6 +15,11 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS claims (id INTEGER PRIMARY KEY AUTO
 
 connect.commit()
 
+
+cursor.execute("PRAGMA table_info(claims)")
+st.write("CLAIMS COLUMNS NOW:", cursor.fetchall())
+
+
 if "page" not in st.session_state:
     st.session_state.page = "login" # remembers which screen user should see 
 
