@@ -14,21 +14,6 @@ cursor = connect.cursor()
 st.write("DATABASE PATH:", __import__("os").path.abspath("sqlite.db"))
 cursor.execute("DROP TABLE IF EXISTS claims")
 
-cursor.execute("""
-CREATE TABLE claims (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    item_id INTEGER NOT NULL,
-    student_name TEXT NOT NULL,
-    claim_date TEXT NOT NULL,
-    status TEXT NOT NULL,
-    delivery TEXT NOT NULL,
-    bus_number TEXT,
-    FOREIGN KEY (item_id) REFERENCES lost_items(id)
-)
-""")
-
-connect.commit()
-
 cursor.execute("SELECT name, sql FROM sqlite_master WHERE type='table' AND name='claims'")
 st.write("UPDATED CLAIMS TABLE:", cursor.fetchone())
 
