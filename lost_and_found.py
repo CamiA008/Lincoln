@@ -224,8 +224,12 @@ def student_page():
     if st.session_state.show_my_claims:
         st.subheader("My Claim Requests")
 
-        cursor.execute( "SELECT * FROM claims WHERE student_name = ?", (student_name.strip(),))
-        claims = cursor.fetchall()  
+    student_name_search = st.text_input("Enter your name to view your claims:")
+
+    if student_name_search.strip():
+        cursor.execute(
+            "SELECT * FROM claims WHERE student_name = ?", (student_name_search.strip(),))
+        claims = cursor.fetchall()
 
         # Display the approved or denired claim
         if len(claims) == 0:
