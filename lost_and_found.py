@@ -115,7 +115,7 @@ def admin_page():
 
         else:
             for claim in claims:
-                st.write(f"Item ID: {claim[1]}, Student: {claim[2]}, Claim Date: {claim[3]}, Status: {claim[4]}")
+                st.write(f"Item ID: {claim[1]}, Student: {claim[2]}, "f"Claim Date: {claim[3]}, Status: {claim[4]}, "f"Delivery: {claim[5]}, Bus Number: {claim[6]}")
 
                 col1, col2,col3 = st.columns(3)
 
@@ -135,7 +135,7 @@ def admin_page():
                         st.rerun()
 
                 with col3:
-                    if claim[3] == "Collected" or "Rejected":
+                    if claim[4] == "Collected" or "Rejected":
                         if st.button("Delete Claim", key=f"delete_{claim[0]}"):
                             cursor.execute("DELETE FROM claims WHERE item_id = ?", (claim[0],))
                             connect.commit()
