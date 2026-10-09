@@ -6,5 +6,20 @@ CREATE TABLE IF NOT EXISTS lost_items(id INTEGER PRIMARY KEY AUTOINCREMENT, item
 -- VALUES (connect this to the class, the forms that people fill out. 
 -- SELECT * FROM lost_items 
 
-REATE TABLE IF NOT EXISTS claims (id INTEGER PRIMARY KEY AUTOINCREMENT, item_id INTEGER NOT NULL, student_name TEXT NOT NULL, claim_date TEXT NOT NULL, status TEXT NOT NULL, delivery TEXT NOT NULL, bus_number TEXT, FOREIGN KEY (item_id) REFERENCES lost_items(id));
+cursor.execute("DROP TABLE IF EXISTS claims")
+
+cursor.execute("""
+CREATE TABLE claims (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    item_id INTEGER NOT NULL,
+    student_name TEXT NOT NULL,
+    claim_date TEXT NOT NULL,
+    status TEXT NOT NULL,
+    delivery TEXT NOT NULL,
+    bus_number TEXT,
+    FOREIGN KEY (item_id) REFERENCES lost_items(id)
+)
+""")
+
+connect.commit()
 
