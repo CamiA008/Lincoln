@@ -327,30 +327,29 @@ def student_page():
                 st.session_state.claiming_item = item[0]
 
         if st.session_state.get("claiming_item") == item[0]:
-            with st.form(f"claim_form_{item[0]}"):
-                student_name = st.text_input("Write your name:")
-                delivery = st.selectbox("how would you like to reciebe the item?", ["collect at Lost and Found", "Deliver home"])
-                bus_number = ""
+            student_name = st.text_input("Write your name:",  key=f"bus_{item[0]}")
+            delivery = st.selectbox("how would you like to reciebe the item?", ["Collect at the Lost and Found", "Deliver home"],key=f"delivery_{item[0]}")
+            
+            bus_number = ""
 
-                if delivery == "Deliver home":
-                    bus_number = st.text_input("Bus number")
+            if delivery == "Deliver home":
+                bus_number = st.text_input("Bus number")
 
-                submitted = st.form_submit_button("Submit Claim")
+            if st.button("Submit Claim", key=f"submit_{item[0]}"):
 
-                if submitted:
-                    if student_name.strip() == "":
-                        st.error("Please enter your name")
+                if student_name.strip() == "":
+                    st.error("Please enter your name", key=f"name_{item[0]}")
 
-                    elif delivery == "Deliver home" and bus_number.strip() == "":
-                        st.error("please enter your bus number.")
+                elif delivery == "Deliver home" and bus_number.strip() == "":
+                    st.error("Please enter your bus number.")
 
-                    else: 
-                        cursor.execute("""INSERT INTO CLAIMS (item_id, student_name, claim_date, status, delivery, bus_number) VALUES (?, ?, ?, ?, ?, ?) """, ( item[0], student_name, str(date.today()), "Pending", delivery, bus_number ))
+                else: 
+                    cursor.execute("""INSERT INTO CLAIMS (item_id, student_name, claim_date, status, delivery, bus_number) VALUES (?, ?, ?, ?, ?, ?) """, ( item[0], student_name, str(date.today()), "Pending", delivery, bus_number.strip() if delivery == "Deliver home" else None ))
 
-                        connect.commit()
-                        st.success("Claim submitted!")
-                        st.session_state.claiming_item = None 
-                        st.rerun()
+                    connect.commit()
+                    st.success("Claim submitted!")
+                    st.session_state.claiming_item = None 
+                    st.rerun()
 
 
     st.divider() # Draw a horizontal line across the page, separate the objects
