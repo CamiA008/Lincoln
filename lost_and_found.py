@@ -311,9 +311,9 @@ def student_page():
             st.write(f"Brand: {item[3]}")
             st.write(f" Color: {item[4]}")
             st.write(f" Location found: {item [5]}")
-            st.write(f" Date found: {item[6]}")
-
-        #Claim button 
+            st.write(f" Date found: {item[6]}") 
+    
+       #Claim button 
     
         if st.button("Claim", key = item[0]): #the key will prevent issues if there are duplicates 
 
@@ -324,9 +324,34 @@ def student_page():
                 st.warning("this item has already been claimed.")
 
             else:
-                cursor.execute("""INSERT INTO claims(item_id, student_username, claim_date, status) VALUES (?, ?, ?, ?)""", (item[0], st.session_state.username, str(date.today()), "Pending"))
-                connect.commit()
-                st.success("Claim submitted!")
+                st.session_state.claiming_item = item[0]
+
+        if st.session_state.get("claiming_item") == item[0]:
+            with st.form(f"claim_form_{item[0]}"):
+                student_name = st.text_input("Write your name:")
+                delivery = st.selectbox("how would you like to reciebe the item?", ["collect at Lost and Found", "Deliver home"])
+                bus_number = ""
+
+                if delivery == "Deliver home":
+                    bus_number = st.text_input("Bus number")
+
+                submitted = st.form_submit_button("Submit Claim")
+
+                if submitted:
+                    if student_name.strip() == "":
+                        st.error("Please enter your name")
+
+                    elif delivery == "Deliver home" and bus_number.strip() == "":
+                        st.error("please enter your bus number.")
+
+                    else: 
+                        cursor.execute("""INSERT INTO CLAIMS (item_id, student_name, claim_date, status, delivery, bus_number) VALUES (?, ?, ?, ?, ?, ?) """, ( item[0], student_name, str(date.today()), "Pending", delivery, bus_number ))
+
+                        connect.commit()
+                        st.success("Claim submitted!")
+                        st.session_state.claiming_item = None 
+                        st.rerun()
+
 
     st.divider() # Draw a horizontal line across the page, separate the objects
  
