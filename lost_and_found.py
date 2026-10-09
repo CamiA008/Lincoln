@@ -245,16 +245,16 @@ def student_page():
                 else: 
                     item_name = "Deleted item"
 
-                if claim[3] == "Approved":
+                if claim[4] == "Approved":
                     st.success(f" Your claim for {item_name} has been approved! Please collect it form the Lost and Found at 2:30pm")
                     if st.button("Got it!", key=f"got_it_{claim[0]}"):
                         cursor.execute("UPDATE claims SET status = 'Collected' WHERE item_id = ?", (claim[0],) )
                         connect.commit()
                         st.success("Item was collected")
                         st.rerun()
-                elif claim[3] == "Rejected":
+                elif claim[4] == "Rejected":
                     st.error(f"Your claim for {item_name} has been rejected. Please contact security for more information")
-                elif claim[3] == "Collected":
+                elif claim[4] == "Collected":
                     st.success("You have collected your item")
                 else:
                     st.info(f"Your request for {item_name} is still pending") #it is nither an error not success, but i want it to have a condition. im not sure if this makes sense
