@@ -181,22 +181,38 @@ def admin_page():
             submitted = st.form_submit_button("Add Item")
 
         if submitted:
-            new_item = Item(item_name, category, brand, color, location_found, date_found, image)
-            # save the picture in SQLite 
-            if image:
-                image_data = image.getvalue()
+
+            # Check whether an image was uploaded
+            if image is None:
+                st.error(
+                    "Error: Please upload an image before adding the item."
+                )
+
             else:
-                image_data = None 
-            
-            # Conncect to the sqlite.db
+                new_item = Item(
+                    item_name,
+                    category,
+                    brand,
+                    color,
+                    location_found,
+                    date_found,
+                    image
+                )
 
-            cursor.execute("""INSERT INTO lost_items (item_name, category, brand, color, location_found, date_found, image) VALUES (?, ?, ?, ?, ?, ?, ?) """, (new_item.item_name, new_item.category,new_item.brand,new_item.color, new_item.location_found, str(new_item.date_found),image_data)) #the ? are placeholders 
-            connect.commit() #Save 
+                # Get the uploaded image data
+                image_data = image.getvalue()
 
-            st.success("Item added!")
-            
-            st.session_state.show_form = False # works as long as streamlit is running, if it is not, it wont save the information
-            st.rerun() #refresh the webpage.
+                # Save the item in the database
+                cursor.execute(
+                    """
+                    INSERT INTO lost_items (item_name, category, brand, color, location_found, date_found, image) VALUES (?, ?, ?, ?, ?, ?, ?) """, (new_item.item_name, new_item.category, new_item.brand, new_item.color, new_item.location_found, str(new_item.date_found), image_data))
+
+                connect.commit()
+
+                st.session_state.show_form = False
+                st.success("Item added successfully!")
+                st.rerun()
+
 
     st.subheader("Uploaded Lost Items")
 
