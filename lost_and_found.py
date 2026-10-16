@@ -11,6 +11,10 @@ import sqlite3
 connect = sqlite3.connect("sqlite.db", check_same_thread = False)
 cursor = connect.cursor()
 
+import os
+
+st.write("Database location:", os.path.abspath("sqlite.db"))
+st.write("Database exists:", os.path.exists("sqlite.db"))
 
 if "page" not in st.session_state:
     st.session_state.page = "login" # remembers which screen user should see 
