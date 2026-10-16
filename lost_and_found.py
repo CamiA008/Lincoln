@@ -153,15 +153,18 @@ def admin_page():
                 with col3:
                     if claim[4] in ("Collected", "Rejected"):
                         if st.button("Delete Claim", key=f"delete_{claim[0]}"):
-                            cursor.execute(
-                                "DELETE FROM claims WHERE item_id = ?",(claim[0],))
+                            cursor.execute("DELETE FROM claims WHERE rowid = ?", (claim[0],))
+
+                            cursor.execute("DELETE FROM claims WHERE item_id = ?",(claim[0],))
                              
                             if claim[4] == "Collected": cursor.execute("DELETE FROM lost_items WHERE id = ?",(claim[1],))
                                                                        
                             connect.commit()
-                
-                            st.session_state["claim_message"] = ("Claim and object deleted!" if claim[4] == "Collected" else "Claim deleted!")
-
+                            if claim[4] == "Collected":
+                                st.session_state["claim_message"] = ("Claim and object deleted!")
+                            else:
+                                st.session_state["claim_message"] = ("Rejected claim deleted!")
+                            
                             st.rerun()
 
 
