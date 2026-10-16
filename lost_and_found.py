@@ -129,14 +129,21 @@ def admin_page():
                 
                 # Accept or deny a claim
                 with col1:
-                    if st.button("Accept", key="accept" + str(claim[0])):
+                    if st.button("Accept", key=f"accept_{claim[0]}"):
                         cursor.execute(
                             "UPDATE claims SET status = ? WHERE item_id = ?",
-                            ("Approved", claim[0])
+                            ("Approved", claim[1])
                         )
                         connect.commit()
                 
-                        st.session_state["claim_message"] = "Claim approved!"
+                        st.write("Rows updated:", cursor.rowcount)
+                
+                        cursor.execute(
+                            "SELECT * FROM claims WHERE item_id = ?",
+                            (claim[1],)
+                        )
+                        st.write("Updated claim data:", cursor.fetchall())
+                
                         st.rerun()
                 
                 with col2:
