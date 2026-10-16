@@ -189,7 +189,8 @@ def admin_page():
                 st.error(
                     "Error: Please upload an image before adding the item.")
 
-            else: new_item = Item( item_name, category, brand, color, location_found, date_found, image)
+            else: 
+                new_item = Item( item_name, category, brand, color, location_found, date_found, image)
 
                 # Get the uploaded image data
                 image_data = image.getvalue()
