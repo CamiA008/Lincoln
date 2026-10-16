@@ -187,19 +187,9 @@ def admin_page():
             # Check whether an image was uploaded
             if image is None:
                 st.error(
-                    "Error: Please upload an image before adding the item."
-                )
+                    "Error: Please upload an image before adding the item.")
 
-            else:
-                new_item = Item(
-                    item_name,
-                    category,
-                    brand,
-                    color,
-                    location_found,
-                    date_found,
-                    image
-                )
+            else: new_item = Item( item_name, category, brand, color, location_found, date_found, image)
 
                 # Get the uploaded image data
                 image_data = image.getvalue()
@@ -216,36 +206,57 @@ def admin_page():
                 st.rerun()
 
 
+
+    # Search and display uploaded lost items
     st.subheader("Uploaded Lost Items")
 
-    cursor.execute("SELECT * FROM lost_items")
-    lost_items = cursor.fetchall() # retrieve all of the objects 
-    # This returns a lits of tuples 
+    # Search by Item ID
+    search_id = st.text_input(
+        "Search by Item ID",
+        placeholder="Enter the Item ID..."
+    )
 
-    if len(lost_items) == 0:
-        st.write("No items are uploaded yet")
+    if search_id:
+        if search_id.isdigit():
+            cursor.execute(
+                "SELECT * FROM lost_items WHERE id = ?",
+                (int(search_id),)
+            )
+            lost_items = cursor.fetchall()
 
-    else: 
-    # Add the new item and the new item 
+            if not lost_items:
+                st.warning("No item found with that ID.")
+        else:
+            st.warning("Please enter a valid numeric Item ID.")
+            lost_items = []
+    else:
+        cursor.execute("SELECT * FROM lost_items")
+        lost_items = cursor.fetchall()
+
+    # Display the matching items
+    if not lost_items:
+        if not search_id:
+            st.write("No items are uploaded yet.")
+    else:
         for item in lost_items:
-            st.write(f" Id: {item[0]}, Name: {item[1]}, Category: {item[2]}, Brand: {item[3]}, Color: {item[4]}, Location: {item[5]}, Date: {item[6]}")
+            st.write(f"ID: {item[0]}, "f"Name: {item[1]}, "f"Category: {item[2]}, "f"Brand: {item[3]}, "f"Color: {item[4]}, "f"Location: {item[5]}, "f"Date: {item[6]}")
 
-    # Delete an object if necessary 
-            if st.button("Delete", key = item[0]):
+            # Delete item if it has no claim requests
+            if st.button("Delete", key=f"delete_item_{item[0]}"):
+                cursor.execute(
+                    "SELECT * FROM claims WHERE item_id = ?",
+                    (item[0],))
 
-                cursor.execute("SELECT * FROM claims WHERE item_id = ?", (item[0],))
-    
-    # Check if there are any exsisting claim requests
+                existing_claim = cursor.fetchone()
 
-                exsisting_claim = cursor.fetchone() 
-                if exsisting_claim:
-                    st.warning("This item cannot be deleted because it has claim requests")
-
-                else: 
-                    cursor.execute("DELETE FROM lost_items WHERE id = ?", (item[0],))
+                if existing_claim:
+                    st.warning("This item cannot be deleted because ""it has claim requests.")
+                else:
+                    cursor.execute("DELETE FROM lost_items WHERE id = ?",(item[0],))
                     connect.commit()
+
                     st.success("Item deleted!")
-                    st.rerun()  
+                    st.rerun()
 
 
 def student_page():
