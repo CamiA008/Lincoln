@@ -291,7 +291,7 @@ def student_page():
 
         else:
             for claim in claims:
-                cursor.execute("SELECT item_name FROM lost_items WHERE id = ?", (claim[0],))
+                cursor.execute("SELECT item_name FROM lost_items WHERE id = ?", (claim[1],))
                 item = cursor.fetchone()
 
                 if item:
@@ -301,8 +301,8 @@ def student_page():
 
                 if claim[4] == "Approved":
                     st.success(f" Your claim for {item_name} has been approved! If the item will not be delivered, please collect it form the Lost and Found at 2:30pm")
-                    if st.button("Got it!", key=f"got_it_{claim[0]}"):
-                        cursor.execute("UPDATE claims SET status = 'Collected' WHERE item_id = ?", (claim[0],) )
+                    if st.button("Got it!", key=f"got_it_{claim[1]}"):
+                        cursor.execute("UPDATE claims SET status = 'Collected' WHERE item_id = ?", (claim[1],) )
                         connect.commit()
                         st.success("Item was collected")
                         st.rerun()
