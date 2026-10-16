@@ -156,7 +156,7 @@ def admin_page():
                             cursor.execute(
                                 "DELETE FROM claims WHERE item_id = ?",(claim[0],))
                              
-                            if claim[4] == "Collected": cursor.execute("DELETE FROM lost_items WHERE id = ?",(claim[1],)
+                            if claim[4] == "Collected": cursor.execute("DELETE FROM lost_items WHERE id = ?",(claim[1],))
                                                                        
                             connect.commit()
                 
