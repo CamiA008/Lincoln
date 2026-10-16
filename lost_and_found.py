@@ -122,45 +122,45 @@ def admin_page():
         # Accept or deny a claim 
 
 # Display success messages after the page reruns
-    if "claim_message" in st.session_state:
-        st.success(st.session_state["claim_message"])
-        del st.session_state["claim_message"]
-    
-    
-    # Accept or deny a claim
-    with col1:
-        if st.button("Accept", key="accept" + str(claim[0])):
-            cursor.execute(
-                "UPDATE claims SET status = ? WHERE item_id = ?",
-                ("Approved", claim[0])
-            )
-            connect.commit()
-    
-            st.session_state["claim_message"] = "Claim approved!"
-            st.rerun()
-    
-    with col2:
-        if st.button("Reject", key="reject" + str(claim[0])):
-            cursor.execute(
-                "UPDATE claims SET status = ? WHERE item_id = ?",
-                ("Rejected", claim[0])
-            )
-            connect.commit()
-    
-            st.session_state["claim_message"] = "Claim rejected!"
-            st.rerun()
-    
-    with col3:
-        if claim[4] in ("Collected", "Rejected"):
-            if st.button("Delete Claim", key=f"delete_{claim[0]}"):
-                cursor.execute(
-                    "DELETE FROM claims WHERE item_id = ?",
-                    (claim[0],)
-                )
-                connect.commit()
-    
-                st.session_state["claim_message"] = "Claim deleted!"
-                st.rerun()
+                if "claim_message" in st.session_state:
+                    st.success(st.session_state["claim_message"])
+                    del st.session_state["claim_message"]
+                
+                
+                # Accept or deny a claim
+                with col1:
+                    if st.button("Accept", key="accept" + str(claim[0])):
+                        cursor.execute(
+                            "UPDATE claims SET status = ? WHERE item_id = ?",
+                            ("Approved", claim[0])
+                        )
+                        connect.commit()
+                
+                        st.session_state["claim_message"] = "Claim approved!"
+                        st.rerun()
+                
+                with col2:
+                    if st.button("Reject", key="reject" + str(claim[0])):
+                        cursor.execute(
+                            "UPDATE claims SET status = ? WHERE item_id = ?",
+                            ("Rejected", claim[0])
+                        )
+                        connect.commit()
+                
+                        st.session_state["claim_message"] = "Claim rejected!"
+                        st.rerun()
+                
+                with col3:
+                    if claim[4] in ("Collected", "Rejected"):
+                        if st.button("Delete Claim", key=f"delete_{claim[0]}"):
+                            cursor.execute(
+                                "DELETE FROM claims WHERE item_id = ?",
+                                (claim[0],)
+                            )
+                            connect.commit()
+                
+                            st.session_state["claim_message"] = "Claim deleted!"
+                            st.rerun()
 
 
     # Form required to add a new item 
