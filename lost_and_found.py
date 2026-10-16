@@ -16,6 +16,12 @@ import os
 st.write("Database location:", os.path.abspath("sqlite.db"))
 st.write("Database exists:", os.path.exists("sqlite.db"))
 
+st.write("Database path:", os.path.abspath("sqlite.db"))
+st.write("Database file size:", os.path.getsize("sqlite.db"), "bytes")
+
+cursor.execute("SELECT COUNT(*) FROM lost_items")
+st.write("Number of lost items:", cursor.fetchone()[0])
+
 if "page" not in st.session_state:
     st.session_state.page = "login" # remembers which screen user should see 
 
