@@ -220,7 +220,13 @@ def admin_page():
                     st.error(f"The photo could not be uploaded: {error}")
                     st.stop()
  
-                db.add_item(new_item, image_path)
+                try:
+                    db.add_item(new_item, image_path)
+                except Exception as error:
+                    # Show Supabase's real reason instead of crashing the app
+                    st.error(f"The item could not be saved: {error}")
+                    db.delete_image(image_path) # remove the photo so it isn't left without an item
+                    st.stop()
  
                 st.session_state.show_form = False
                 st.success("Item added successfully!")
@@ -416,7 +422,11 @@ def student_page():
                     else:
                         bus = None
  
-                    db.add_claim(item_id, student_name.strip(), str(date.today()), delivery, bus)
+                    try:
+                        db.add_claim(item_id, student_name.strip(), str(date.today()), delivery, bus)
+                    except Exception as error:
+                        st.error(f"The claim could not be saved: {error}")
+                        st.stop()
  
                     st.success("Claim submitted!")
                     st.session_state.claiming_item = None
