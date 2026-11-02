@@ -97,6 +97,13 @@ def upload_image(uploaded_file):
     return image_path
  
  
+def delete_image(image_path):
+    try:
+        supabase.storage.from_(IMAGE_BUCKET).remove([image_path])
+    except Exception:
+        pass  # if the photo is already gone, nothing to do
+ 
+ 
 @st.cache_data(ttl=3600)  # remember downloaded photos for 1 hour so the page loads faster
 def get_image(image_path):
     # Downloads the photo from Supabase Storage and returns its bytes
