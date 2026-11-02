@@ -1,3 +1,4 @@
+
 #Lost and found
 #streamlit run "lost_and_found.py"
  
@@ -93,6 +94,9 @@ def admin_page():
         st.session_state.confirm_close = None # id of the claim the admin is about to close
  
     st.header("Admin Dashbord")
+ 
+    # TEMPORARY: shows which kind of Supabase key the app uses (not the key itself). Remove when photos work.
+    st.sidebar.caption(f"Supabase key in use: {db.key_type()}")
  
     col1, col2 = st.columns(2)
  
