@@ -27,28 +27,6 @@ def get_supabase():
 supabase = get_supabase()
  
  
-def key_type():
-    # TEMPORARY CHECK: says which KIND of key is in the Secrets, without showing the key itself
-    import base64, json
-    key = st.secrets["SUPABASE_KEY"].strip()
- 
-    if key.startswith("sb_secret_"):
-        return "new SECRET key (sb_secret_...)"
-    if key.startswith("sb_publishable_"):
-        return "PUBLISHABLE key (wrong one, it cannot upload)"
-    if key.startswith("eyJ"):
-        # legacy keys contain their role in the middle part
-        try:
-            middle = key.split(".")[1]
-            middle += "=" * (-len(middle) % 4)
-            role = json.loads(base64.urlsafe_b64decode(middle))["role"]
-            if role == "service_role":
-                return "legacy service_role key (correct)"
-            return f"legacy '{role}' key (wrong one, it cannot upload)"
-        except Exception:
-            return "legacy key, but it looks damaged (check the copy)"
-    return "unknown key format (check what you pasted)"
- 
  
 # ---------------- LOST ITEMS ----------------
 def get_all_items():
@@ -161,4 +139,3 @@ def close_claim(claim):
     item = get_item(claim["item_id"])
     if item:
         delete_item(item)
- 
