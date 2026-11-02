@@ -4,12 +4,12 @@
 import streamlit as st
 from datetime import date
 from object import Item
-import sqlite3
+import database as db # all the Supabase code is in database.py
  
-#Connect to the database
- 
-connect = sqlite3.connect("sqlite.db", check_same_thread = False)
-cursor = connect.cursor()
+# The data lives in Supabase, not in a local sqlite.db file,
+# so it is not deleted when Streamlit Community Cloud reboots.
+# Every row is a dictionary, so columns are read BY NAME (item["item_name"]),
+# not by position (item[1]).
  
  
 if "page" not in st.session_state:
@@ -72,8 +72,6 @@ def home_page():
  
             except FileNotFoundError:
                 st.write ("I could not find that file")
-            except Exception:
-                st.write("Another error occured")
  
     elif st.session_state.role == "Student":
  
@@ -100,7 +98,7 @@ def admin_page():
  
     with col1:
         if st.button("Add lost item"):
-            st.session_state.show_form = True # Creates an empty lsit only if it doesnt exsist.
+            st.session_state.show_form = True
  
     with col2:
         if st.button("View Claim Requests"):
@@ -111,26 +109,22 @@ def admin_page():
         st.subheader("Claim Requests")
  
         # Display success messages after the page reruns
-        # (moved out of the loop so it only appears once)
         if "claim_message" in st.session_state:
             st.success(st.session_state["claim_message"])
             del st.session_state["claim_message"]
  
-        cursor.execute("SELECT * FROM claims")
-        claims = cursor.fetchall()
+        claims = db.get_all_claims()
  
         if len(claims) == 0:
             st.write("No claim requests.")
  
         else:
             for claim in claims:
-                # claim = (id, item_id, student_name, claim_date, status, delivery, bus_number)
-                claim_id = claim[0]
-                item_id = claim[1]
-                status = claim[4]
-                delivery = claim[5]
+                claim_id = claim["id"]
+                status = claim["status"]
+                delivery = claim["delivery"]
  
-                st.write(f"Item ID: {item_id}, Student: {claim[2]}, "f"Claim Date: {claim[3]}, Status: {status}, "f"Delivery: {delivery}, Bus Number: {claim[6]}")
+                st.write(f"Item ID: {claim['item_id']}, Student: {claim['student_name']}, Claim Date: {claim['claim_date']}, Status: {status}, Delivery: {delivery}, Bus Number: {claim['bus_number']}")
  
                 col1, col2, col3 = st.columns(3)
  
@@ -138,21 +132,18 @@ def admin_page():
                 if status == "Pending":
                     with col1:
                         if st.button("Accept", key=f"accept_{claim_id}"):
-                            cursor.execute("UPDATE claims SET status = ? WHERE id = ?", ("Approved", claim_id))
-                            connect.commit()
+                            db.set_claim_status(claim_id, "Approved")
                             st.session_state["claim_message"] = "Claim approved! The student can now see it."
                             st.rerun()
  
                     with col2:
                         if st.button("Reject", key=f"reject_{claim_id}"):
-                            cursor.execute("UPDATE claims SET status = ? WHERE id = ?", ("Rejected", claim_id))
-                            connect.commit()
+                            db.set_claim_status(claim_id, "Rejected")
                             st.session_state["claim_message"] = "Claim rejected! The student can now see it."
                             st.rerun()
  
                 # STEP 2: approved -> the ADMIN closes it once the item is picked up or sent on the bus.
                 # The student does not need to press anything, so claims never get stuck.
-                # ("Collected" is included for old claims where a student pressed the old "Got it!" button)
                 elif status in ("Approved", "Collected"):
                     if delivery == "Deliver home":
                         close_label = "Sent on bus"
@@ -170,9 +161,7 @@ def admin_page():
  
                         with yes_col:
                             if st.button("Yes, delete", key=f"yes_{claim_id}"):
-                                cursor.execute("DELETE FROM claims WHERE id = ?", (claim_id,))
-                                cursor.execute("DELETE FROM lost_items WHERE id = ?", (item_id,))
-                                connect.commit()
+                                db.close_claim(claim) # deletes the claim, the item and its photo
                                 st.session_state.confirm_close = None
                                 st.session_state["claim_message"] = "Item handed over. Claim and item deleted!"
                                 st.rerun()
@@ -186,8 +175,7 @@ def admin_page():
                 elif status == "Rejected":
                     with col1:
                         if st.button("Delete Claim", key=f"delete_{claim_id}"):
-                            cursor.execute("DELETE FROM claims WHERE id = ?", (claim_id,))
-                            connect.commit()
+                            db.delete_claim(claim_id)
                             st.session_state["claim_message"] = "Rejected claim deleted! The item can be claimed again."
                             st.rerun()
  
@@ -199,7 +187,7 @@ def admin_page():
     if st.session_state.show_form == True:
  
         with st.form("add_item"):
-            item_name = st.selectbox("Item Name",["Sweater", "Lunchbox"," Water Bottle", "Pencil Case", "Shirt", "Headphones", "Other"])
+            item_name = st.selectbox("Item Name",["Sweater", "Lunchbox", "Water Bottle", "Pencil Case", "Shirt", "Headphones", "Other"])
  
             category = st.selectbox("Category",["Clothing", "Electronics", "School Supplies", "Food and Drink", "Personal Items", "Other"])
             brand = st.text_input("Brand")
@@ -207,7 +195,7 @@ def admin_page():
  
             location_found = st.selectbox("Location",["Cafeteria","Central Plaza", "Buses", "Gym", "High School Building", "Middle School Building", "Elementary Building", "Preschool Building"])
             date_found = st.date_input("Date found")
-            image = st.file_uploader("Image")
+            image = st.file_uploader("Image", type=["png", "jpg", "jpeg"])
  
             submitted = st.form_submit_button("Add Item")
  
@@ -219,17 +207,16 @@ def admin_page():
                     "Error: Please upload an image before adding the item.")
  
             else:
-                new_item = Item( item_name, category, brand, color, location_found, date_found, image)
+                new_item = Item( item_name, category, brand.strip(), color, location_found, date_found, image)
  
-                # Get the uploaded image data
-                image_data = image.getvalue()
+                # Save the photo in Supabase Storage, then the item (with the photo's file name) in the database
+                try:
+                    image_path = db.upload_image(image)
+                except Exception as error:
+                    st.error(f"The photo could not be uploaded: {error}")
+                    st.stop()
  
-                # Save the item in the database
-                cursor.execute(
-                    """
-                    INSERT INTO lost_items (item_name, category, brand, color, location_found, date_found, image) VALUES (?, ?, ?, ?, ?, ?, ?) """, (new_item.item_name, new_item.category, new_item.brand, new_item.color, new_item.location_found, str(new_item.date_found), image_data))
- 
-                connect.commit()
+                db.add_item(new_item, image_path)
  
                 st.session_state.show_form = False
                 st.success("Item added successfully!")
@@ -248,20 +235,18 @@ def admin_page():
  
     if search_id:
         if search_id.isdigit():
-            cursor.execute(
-                "SELECT * FROM lost_items WHERE id = ?",
-                (int(search_id),)
-            )
-            lost_items = cursor.fetchall()
+            found_item = db.get_item(int(search_id))
  
-            if not lost_items:
+            if found_item:
+                lost_items = [found_item]
+            else:
+                lost_items = []
                 st.warning("No item found with that ID.")
         else:
             st.warning("Please enter a valid numeric Item ID.")
             lost_items = []
     else:
-        cursor.execute("SELECT * FROM lost_items")
-        lost_items = cursor.fetchall()
+        lost_items = db.get_all_items()
  
     # Display the matching items
     if not lost_items:
@@ -269,21 +254,15 @@ def admin_page():
             st.write("No items are uploaded yet.")
     else:
         for item in lost_items:
-            st.write(f"ID: {item[0]}, "f"Name: {item[1]}, "f"Category: {item[2]}, "f"Brand: {item[3]}, "f"Color: {item[4]}, "f"Location: {item[5]}, "f"Date: {item[6]}")
+            st.write(f"ID: {item['id']}, Name: {item['item_name']}, Category: {item['category']}, Brand: {item['brand']}, Color: {item['color']}, Location: {item['location_found']}, Date: {item['date_found']}")
  
             # Delete item if it has no claim requests
-            if st.button("Delete", key=f"delete_item_{item[0]}"):
-                cursor.execute(
-                    "SELECT * FROM claims WHERE item_id = ?",
-                    (item[0],))
+            if st.button("Delete", key=f"delete_item_{item['id']}"):
  
-                existing_claim = cursor.fetchone()
- 
-                if existing_claim:
-                    st.warning("This item cannot be deleted because ""it has claim requests.")
+                if db.get_claim_for_item(item["id"]):
+                    st.warning("This item cannot be deleted because it has claim requests.")
                 else:
-                    cursor.execute("DELETE FROM lost_items WHERE id = ?",(item[0],))
-                    connect.commit()
+                    db.delete_item(item) # deletes the item and its photo
  
                     st.success("Item deleted!")
                     st.rerun()
@@ -291,8 +270,12 @@ def admin_page():
  
 def student_page():
  
-    cursor.execute("SELECT * FROM lost_items")
-    lost_items = cursor.fetchall()
+    lost_items = db.get_all_items()
+ 
+    # Look up item names by id (used in "My Claim Requests")
+    item_names = {}
+    for item in lost_items:
+        item_names[item["id"]] = item["item_name"]
  
 # Students' lost items take up more space so, for convencience, I will put their claims at the top
     if "show_my_claims" not in st.session_state:
@@ -304,45 +287,32 @@ def student_page():
     if st.session_state.show_my_claims:
         st.subheader("My Claim Requests")
  
-        # (moved inside the "if" so it only shows after pressing "View My Claims")
         student_name_search = st.text_input("Enter your name to view your claims:")
  
         if student_name_search.strip():
-            # LOWER and TRIM ignore capitals and extra spaces, so "Ana" and "ana " both match
-            cursor.execute(
-                "SELECT * FROM claims WHERE LOWER(TRIM(student_name)) = LOWER(TRIM(?))", (student_name_search,))
-            claims = cursor.fetchall()
+            # ignores capitals and extra spaces, so "Ana" and "ana " both match
+            claims = db.get_claims_for_student(student_name_search)
  
-            # Display the approved or denired claim
+            # Display the approved or denied claim
             if len(claims) == 0:
                 st.write("No active claims found for that name. Items that were already picked up or sent home no longer appear here.")
  
             else:
                 for claim in claims:
-                    # claim = (id, item_id, student_name, claim_date, status, delivery, bus_number)
-                    cursor.execute("SELECT item_name FROM lost_items WHERE id = ?", (claim[1],))
-                    item = cursor.fetchone()
+                    item_name = item_names.get(claim["item_id"], "Deleted item")
  
-                    if item:
-                        item_name = item[0]
-                    else:
-                        item_name = "Deleted item"
- 
-                    if claim[4] == "Approved":
-                        # The message depends on how the student chose to receive the item.
-                        # No "Got it!" button anymore: the admin closes the claim instead.
-                        if claim[5] == "Deliver home":
-                            st.success(f"Your claim for {item_name} has been approved! It will be sent home on bus {claim[6]}.")
+                    if claim["status"] == "Approved":
+                        # The message depends on how the student chose to receive the item
+                        if claim["delivery"] == "Deliver home":
+                            st.success(f"Your claim for {item_name} has been approved! It will be sent home on bus {claim['bus_number']}.")
                         else:
                             st.success(f"Your claim for {item_name} has been approved! Please collect it from the Lost and Found at 2:30pm.")
-                    elif claim[4] == "Rejected":
+                    elif claim["status"] == "Rejected":
                         st.error(f"Your claim for {item_name} has been rejected. Please contact security for more information")
-                    elif claim[4] == "Collected":
+                    elif claim["status"] == "Collected":
                         st.success("You have collected your item")
                     else:
-                        st.info(f"Your request for {item_name} is still pending") #it is nither an error not success, but i want it to have a condition. im not sure if this makes sense
- 
- 
+                        st.info(f"Your request for {item_name} is still pending")
  
         st.divider()
 # Add a filter. Make it easier for people to find the lost items
@@ -367,15 +337,15 @@ def student_page():
     else:
         for item in lost_items:
             if search_field == "Name":
-                value = item[1]
+                value = item["item_name"]
             elif search_field == "Category":
-                value = item[2]
+                value = item["category"]
             elif search_field == "Brand":
-                value = item[3]
+                value = item["brand"]
             elif search_field == "Color":
-                value = item[4]
+                value = item["color"]
             else:
-                value = item[5]
+                value = item["location_found"]
  
             if value and search_text.lower() in value.lower():
                 filtered_items.append(item)
@@ -383,64 +353,73 @@ def student_page():
  
 # View the lost items
  
-    if len(filtered_items) == 0:
+    if len(lost_items) == 0:
         st.write("No lost items have been uploaded yet.")
+    elif len(filtered_items) == 0:
+        st.write("No items match your search.")
  
     for item in filtered_items:
+        item_id = item["id"]
         col1, col2 = st.columns(2)
  
         with col1:
-            if item[7]:
-                st.image(item[7], width = 300)
+            if item["image_path"]:
+                image_bytes = db.get_image(item["image_path"])
+                try:
+                    st.image(image_bytes, width = 300)
+                except Exception:
+                    # a missing or broken photo should not crash the whole page
+                    st.caption("Photo could not be loaded")
  
         with col2:
-            st.write(f"{item[1]}")
-            st.write(f"Category: {item[2]}")
-            st.write(f"Brand: {item[3]}")
-            st.write(f" Color: {item[4]}")
-            st.write(f" Location found: {item [5]}")
-            st.write(f" Date found: {item[6]}")
+            st.write(f"{item['item_name']}")
+            st.write(f"Category: {item['category']}")
+            st.write(f"Brand: {item['brand']}")
+            st.write(f"Color: {item['color']}")
+            st.write(f"Location found: {item['location_found']}")
+            st.write(f"Date found: {item['date_found']}")
  
        #Claim button
  
-        if st.button("Claim", key = item[0]): #the key will prevent issues if there are duplicates
+        if st.button("Claim", key = f"claim_{item_id}"): #the key will prevent issues if there are duplicates
  
-            cursor.execute("SELECT * FROM claims WHERE item_id = ?", (item[0],))
-            existing_claim = cursor.fetchone() # unlike fetchall that retrieves everything, fetchone retries one row
- 
-            if existing_claim:
+            if db.get_claim_for_item(item_id):
                 st.warning("this item has already been claimed.")
  
             else:
-                st.session_state.claiming_item = item[0]
+                st.session_state.claiming_item = item_id
  
-        if st.session_state.get("claiming_item") == item[0]:
-            student_name = st.text_input("Write your name:",  key=f"name_{item[0]}")
-            delivery = st.selectbox("how would you like to reciebe the item?", ["Collect at the Lost and Found", "Deliver home"],key=f"delivery_{item[0]}")
+        if st.session_state.get("claiming_item") == item_id:
+            student_name = st.text_input("Write your name:", key=f"name_{item_id}")
+            delivery = st.selectbox("how would you like to reciebe the item?", ["Collect at the Lost and Found", "Deliver home"], key=f"delivery_{item_id}")
  
             bus_number = ""
  
             if delivery == "Deliver home":
-                bus_number = st.text_input("Bus number", key=f"bus_{item[0]}")
+                bus_number = st.text_input("Bus number", key=f"bus_{item_id}")
  
-            if st.button("Submit Claim", key=f"submit_{item[0]}"):
+            if st.button("Submit Claim", key=f"submit_{item_id}"):
  
                 if student_name.strip() == "":
-                    st.error("Please enter your name") # st.error does not accept a key, it caused a crash
+                    st.error("Please enter your name")
  
                 elif delivery == "Deliver home" and bus_number.strip() == "":
                     st.error("Please enter your bus number.")
  
                 else:
-                    cursor.execute("""INSERT INTO CLAIMS (item_id, student_name, claim_date, status, delivery, bus_number) VALUES (?, ?, ?, ?, ?, ?) """, ( item[0], student_name.strip(), str(date.today()), "Pending", delivery, bus_number.strip() if delivery == "Deliver home" else None ))
+                    if delivery == "Deliver home":
+                        bus = bus_number.strip()
+                    else:
+                        bus = None
  
-                    connect.commit()
+                    db.add_claim(item_id, student_name.strip(), str(date.today()), delivery, bus)
+ 
                     st.success("Claim submitted!")
                     st.session_state.claiming_item = None
                     st.rerun()
  
  
-    st.divider() # Draw a horizontal line across the page, separate the objects
+        st.divider() # Draw a horizontal line across the page, separate the objects
  
  
  
@@ -448,7 +427,6 @@ if st.session_state.page == "login":
     home_page()
  
 elif st.session_state.page == "admin":
-    st.write("Going to admin page")
     admin_page()
  
 elif st.session_state.page == "student":
